@@ -33,11 +33,22 @@ class Instruction:
 	"""
 
 	mnemonic: ClassVar[str] = NotImplemented
+	"""Text representation of the instruction"""
+
 	match: ClassVar[int] = NotImplemented
+	"""Bits consumed by the instruction, value must match exactly when masked with mmask"""
+
 	mmask: ClassVar[int] = NotImplemented
+	"""Mask applied to match when finding instructions"""
+
 	bytecount: ClassVar[int] = NotImplemented
+	"""Instruction Byte Count"""
+
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
-	format: ClassVar[str] = NotImplemented  # format string with field entries
+	"""Tuple of Field instances for instruction fields"""
+
+	format: ClassVar[str] = NotImplemented
+	"""Format string with field entries"""
 
 	word: int
 	pc: int
