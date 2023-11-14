@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 80
+max-complexity = 20
+select = C,D,E,F,I,N,W,B,B950
+ignore = E203, E501, W503, W191, E126, E128
+per-file-ignores =
+	.\tests\*.py:N803
+exclude =
+	.eggs,
+	.mypy_cache,
+	.git,
+	__pycache__,
+	build,
+	dist,
