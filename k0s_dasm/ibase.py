@@ -47,7 +47,7 @@ class Instruction:
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
 	"""Tuple of Field instances for instruction fields"""
 
-	format: ClassVar[str] = NotImplemented  #
+	format: ClassVar[str] = NotImplemented
 	"""Format string with field entries"""
 
 	word: int
