@@ -62,7 +62,7 @@ def addr_pcrel(val: int, inst: "Instruction", /) -> str:
 	pc_next = inst.pc + inst.bytecount
 	if val > 0x80:
 		# jdisp is guaranteed 8-bit signed, so manually do two's complement
-		val = 0x100 - val
+		val = val - 0x100
 	pc_jdisp = pc_next + val
 	return f"${pc_jdisp:04X}H"
 

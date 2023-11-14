@@ -14,6 +14,7 @@ class Program:
 	flash: bytearray
 	pc: int = 0
 	instrs: dict[int, "Instruction"] = field(default_factory=dict)
+	labels: dict[int, str] = field(default_factory=dict)
 
 
 _T = TypeVar("_T", bound="Instruction")
@@ -160,12 +161,8 @@ class FieldW(Field):
 
 	def from_inst_word(self, word: int) -> int:
 		"""Load field word from instruction word."""
-		print(f"word = 0x{word:06X}")
 		offset = self.offset_bytes * 8
 		byte_h = (word >> offset) & 0xFF
 		byte_l = (word >> (offset + 8)) & 0xFF
-		print(f"byte_h = 0x{byte_h:02X}")
-		print(f"byte_l = 0x{byte_l:02X}")
 		fword = byte_l | (byte_h << 8)
-		print(f"fword = 0x{fword:04X}")
 		return fword
