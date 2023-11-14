@@ -26,9 +26,9 @@ class CheckFormat(Command):
 		"""Run command."""
 		pkgdir = Path(__file__).parent.absolute()
 		commands = {
-			"black": f"python -m black --check {pkgdir}",
-			"flake8": f"python -m flake8 {pkgdir}",
-			"mypy": f"python -m mypy {pkgdir}",
+			"black": f'python -m black --check "{pkgdir}"',
+			"flake8": f'python -m flake8 "{pkgdir}"',
+			"mypy": f'python -m mypy "{pkgdir}"',
 		}
 
 		try:
