@@ -1,6 +1,6 @@
 """Instruction type definitions."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar, Sequence, Type, TypeVar
 
 from k0s_dasm.flow import Forward as FlowForward
@@ -87,7 +87,7 @@ class Instruction:
 	program: "Program"
 	"""The containing Program."""
 
-	notes: str = ""
+	notes: list[str] = field(default_factory=list)
 	"""Notes or warnings from analysis."""
 
 	@classmethod

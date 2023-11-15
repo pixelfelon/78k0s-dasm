@@ -87,5 +87,9 @@ class Flow:
 
 		If guessing a computed address, it would be prudent to add a note to
 		the Instruction object.
+
+		If returning multiple next addresses, it is preferred that if the
+		address of the linearly next instruction is present, that it will be
+		first in the returned sequence.
 		"""
 		raise NotImplementedError

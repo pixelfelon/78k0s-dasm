@@ -3,7 +3,8 @@
 from typing import ClassVar, Sequence
 
 from k0s_dasm import field
-from k0s_dasm.base import Field
+from k0s_dasm.base import Field, Flow
+from k0s_dasm.flow import CallReturn, ConditionalBranch, Return, UnconditionalBranch
 from k0s_dasm.ibase import Instruction
 
 
@@ -40,6 +41,7 @@ class CallAddr16(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddr16(name="addr16"),)
+	flow: ClassVar[Flow] = CallReturn(0)
 	format: ClassVar[str] = "CALL {0}"
 
 
@@ -142,6 +144,7 @@ class DbnzBAddrRel(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
+	flow: ClassVar[Flow] = ConditionalBranch(0)
 	format: ClassVar[str] = "DBNZ B, {0}"
 
 
@@ -153,6 +156,7 @@ class DbnzCAddrRel(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
+	flow: ClassVar[Flow] = ConditionalBranch(0)
 	format: ClassVar[str] = "DBNZ C, {0}"
 
 
@@ -167,6 +171,7 @@ class DbnzSaddrAddrRel(Instruction):
 		field.SAddr(offset=8, name="saddr"),
 		field.JAddrRel(offset=0, name="addr16"),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(1)
 	format: ClassVar[str] = "DBNZ {0}, {1}"
 
 
@@ -200,6 +205,7 @@ class BzAddrRel(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
+	flow: ClassVar[Flow] = ConditionalBranch(0)
 	format: ClassVar[str] = "BZ {0}"
 
 
@@ -211,6 +217,7 @@ class BrAddrRel(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
+	flow: ClassVar[Flow] = UnconditionalBranch(0)
 	format: ClassVar[str] = "BR {0}"
 
 
@@ -235,7 +242,6 @@ class Clr1Cy(Instruction):
 	match: ClassVar[int] = 0b00000100
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = tuple()
 	format: ClassVar[str] = "CLR1 CY"
 
 
@@ -246,7 +252,6 @@ class RorcA1(Instruction):
 	match: ClassVar[int] = 0b00000010
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = tuple()
 	format: ClassVar[str] = "RORC A, 1"
 
 
@@ -257,7 +262,6 @@ class XchAX(Instruction):
 	match: ClassVar[int] = 0b11000000
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = tuple()
 	format: ClassVar[str] = "XCH A, X"
 
 
@@ -268,7 +272,6 @@ class RolA1(Instruction):
 	match: ClassVar[int] = 0b00010000
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = tuple()
 	format: ClassVar[str] = "ROL A, 1"
 
 
@@ -279,7 +282,7 @@ class Ret(Instruction):
 	match: ClassVar[int] = 0b00100000
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = tuple()
+	flow: ClassVar[Flow] = Return()
 	format: ClassVar[str] = "RET"
 
 
