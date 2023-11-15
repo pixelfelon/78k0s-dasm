@@ -57,6 +57,7 @@ UPD78F9202_SFR: dict[int, str] = {
 	0xFF16: "CR010",  # pure 16-bit
 	0xFF18: "ADCR",  # pure 16-bit
 	0xFF1A: "ADCRH",
+	# 0xFF1C: "SP",  # ??? seems true based on some funny instructions.
 	0xFF22: "PM2",
 	0xFF23: "PM3",
 	0xFF24: "PM4",

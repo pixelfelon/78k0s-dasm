@@ -22,6 +22,23 @@ class MovwRpWord(Instruction):
 	format: ClassVar[str] = "MOVW {0}, {1}"
 
 
+# TODO: there are special cases of the next two instructions where if saddrp
+#  is 0x1C -> 0xFF1C, then it addresses the Stack Pointer. But this isn't
+#  documented anywhere as the address of the stack pointer, and maybe it's not.
+#  We're not set up to deconflict overlapping definitions by priority...
+
+
+class MovwAxSaddrp(Instruction):
+	"""MOVW AX, saddrp."""
+
+	mnemonic: ClassVar[str] = "MOVW AX, saddrp"
+	match: ClassVar[int] = 0b11010110_00000000
+	mmask: ClassVar[int] = 0b11111111_00000000
+	bytecount: ClassVar[int] = 2
+	field_defs: ClassVar[Sequence["Field"]] = (field.SAddr(offset=0, name="saddrp"),)
+	format: ClassVar[str] = "MOVW AX, {0}"
+
+
 class MovwSaddrpAx(Instruction):
 	"""MOVW saddrp, AX."""
 
@@ -284,6 +301,17 @@ class Ret(Instruction):
 	bytecount: ClassVar[int] = 1
 	flow: ClassVar[Flow] = Return()
 	format: ClassVar[str] = "RET"
+
+
+class PushRp(Instruction):
+	"""PUSH rp."""
+
+	mnemonic: ClassVar[str] = "PUSH rp"
+	match: ClassVar[int] = 0b10100010
+	mmask: ClassVar[int] = 0b11110011
+	bytecount: ClassVar[int] = 1
+	field_defs: ClassVar[Sequence["Field"]] = (field.Reg16(offset=2, name="rp"),)
+	format: ClassVar[str] = "PUSH {0}"
 
 
 # TODO: The Instructions
