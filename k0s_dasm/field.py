@@ -20,7 +20,6 @@ class _Short(Field):
 		"""Load field word from instruction word."""
 		mask = (2**self.bits) - 1
 		fword = (instr_word >> self.offset) & mask
-		assert isinstance(fword, int), "MyPy was right i guess"
 		return Operand(fdef=self, inst=inst, val=fword)
 
 

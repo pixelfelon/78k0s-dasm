@@ -43,27 +43,56 @@ class Instruction:
 	"""
 
 	mnemonic: ClassVar[str] = NotImplemented
-	"""Text representation of the instruction"""
+	"""Class constant: text representation of the instruction."""
 
 	match: ClassVar[int] = NotImplemented
-	"""Bits consumed by the instruction, value must match exactly when masked with mmask"""
+	"""
+	Class constant: bits consumed by the instruction.
+
+	Program data must match exactly when masked with mmask.
+	"""
 
 	mmask: ClassVar[int] = NotImplemented
-	"""Mask applied to match when finding instructions"""
+	"""Class constant: mask applied to match and data when finding instructions."""
 
 	bytecount: ClassVar[int] = NotImplemented
-	"""Instruction Byte Count"""
+	"""Class constant: instruction byte count."""
 
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
-	"""Tuple of Field instances for instruction fields"""
+	"""Class constant: tuple of Field instances for instruction fields."""
 
 	format: ClassVar[str] = NotImplemented
-	"""Format string with field entries"""
+	"""Class constant: format string with field entries."""
 
 	word: int
+	"""Raw instruction word (8-32 bits)."""
+
 	pc: int
-	fields: dict["Field", "Operand"]  # order as per field_defs
+	"""Address of (the first byte of) this instruction."""
+
+	next: Sequence[int]
+	"""
+	Address(es) of the next instruction(s).
+
+	In general this is the next sequential instruction in the program. But, if
+	it's a branch instruction, it will be something different. If it's a
+	conditional branch, there would be multiple next addresses. If the next
+	address is calculated at runtime, then this field may be empty (requiring
+	manual intervention).
+	"""
+
+	operands: dict["Field", "Operand"]
+	"""
+	Operand values for each defined Field.
+
+	Preferred order is as per ``field_defs``.
+	"""
+
 	program: Program
+	"""The containing Program."""
+
+	notes: str = ""
+	"""Notes or warnings from analysis."""
 
 	@classmethod
 	def load(cls: Type[_T], program: Program, addr: int | None = None) -> _T | None:
@@ -78,7 +107,8 @@ class Instruction:
 			pc = program.pc
 		else:
 			pc = addr
-		data = program.flash[pc : pc + cls.bytecount]
+		pc_next = pc + cls.bytecount
+		data = program.flash[pc:pc_next]
 
 		if len(data) < cls.bytecount:
 			return None
@@ -91,7 +121,8 @@ class Instruction:
 		out = cls(
 			word=word,
 			pc=pc,
-			fields=fields,
+			next=[pc_next],
+			operands=fields,
 			program=program,
 		)
 
@@ -144,7 +175,7 @@ class Instruction:
 		"""Render instruction mnemonic with field values."""
 		ren_fields: list[str] = []
 		for fdef in self.field_defs:
-			ren_fields.append(self.fields[fdef].render())
+			ren_fields.append(self.operands[fdef].render())
 		return self.format.format(*ren_fields)
 
 

@@ -6,15 +6,18 @@ from k0s_dasm.util import fmthex
 
 with open(r"C:\Users\jrowley\Downloads\BP10140_41807201810293003049.bin", "rb") as f:
 	prog = Program(bytearray(f.read()))
-	prog.pc = PROG_BASE
-	print(f"label_{prog.pc:04X}:")
+	pc = PROG_BASE
+	print(f"label_{pc:04X}:")
 	while True:
-		oldpc = prog.pc
+		oldpc = pc
 		try:
-			instr = Instruction.autoload(prog)
+			instr = Instruction.autoload(prog, pc)
+			if len(instr.next) != 1:
+				raise RuntimeError("Branching NYI")
+			pc = instr.next[0]
 		except ValueError:
 			break
-		word = prog.flash[oldpc : prog.pc]
+		word = prog.flash[oldpc:pc]
 		print(f"\t{instr.render():<30};{oldpc:04X}  {fmthex(word)}")
-	badword = prog.flash[prog.pc : prog.pc + 4]
-	print(f"; BAD INSTRUCTION AT 0x{prog.pc:04X}: {fmthex(badword)} ...")
+	badword = prog.flash[pc : pc + 4]
+	print(f"; BAD INSTRUCTION AT 0x{pc:04X}: {fmthex(badword)} ...")
