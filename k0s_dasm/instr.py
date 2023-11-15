@@ -1,8 +1,9 @@
 """Instruction mnemonic definitions."""
+
 from typing import ClassVar, Sequence
 
-from k0s_dasm import styler
-from k0s_dasm.ibase import Field, FieldB, FieldW, Instruction
+from k0s_dasm import field
+from k0s_dasm.ibase import Field, Instruction
 
 
 class MovwRpWord(Instruction):
@@ -13,8 +14,8 @@ class MovwRpWord(Instruction):
 	mmask: ClassVar[int] = 0b11110011_00000000_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=18, bits=2, styler=styler.reg16, name="rp"),
-		FieldW(offset_bytes=0, styler=styler.imm16, name="word"),
+		field.Reg16(offset=18, name="rp"),
+		field.Imm16(offset_bytes=0, name="word"),
 	)
 	format: ClassVar[str] = "MOVW {0}, {1}"
 
@@ -26,9 +27,7 @@ class MovwSaddrpAx(Instruction):
 	match: ClassVar[int] = 0b11100110_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=0, bits=8, styler=styler.addr_short, name="saddrp"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.SAddr(offset=0, name="saddrp"),)
 	format: ClassVar[str] = "MOVW {0}, AX"
 
 
@@ -39,9 +38,7 @@ class CallAddr16(Instruction):
 	match: ClassVar[int] = 0b00100010_00000000_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldW(offset_bytes=0, styler=styler.addr_abs, name="addr16"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddr16(name="addr16"),)
 	format: ClassVar[str] = "CALL {0}"
 
 
@@ -52,9 +49,7 @@ class XorAR(Instruction):
 	match: ClassVar[int] = 0b00001010_01000001
 	mmask: ClassVar[int] = 0b11111111_11110001
 	bytecount: ClassVar[int] = 2
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=1, bits=3, styler=styler.reg8, name="r"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.Reg8(offset=1, name="r"),)
 	format: ClassVar[str] = "XOR A, {0}"
 
 
@@ -65,9 +60,7 @@ class MovAddr16A(Instruction):
 	match: ClassVar[int] = 0b11101001_00000000_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldW(offset_bytes=0, styler=styler.addr_abs, name="addr16"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.Addr16(name="addr16"),)
 	format: ClassVar[str] = "MOV {0}, A"
 
 
@@ -79,8 +72,8 @@ class MovRByte(Instruction):
 	mmask: ClassVar[int] = 0b11111111_11110001_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=9, bits=3, styler=styler.reg8, name="r"),
-		FieldB(offset=0, bits=8, styler=styler.imm8, name="byte"),
+		field.Reg8(offset=9, name="r"),
+		field.Imm8(offset=0, name="byte"),
 	)
 	format: ClassVar[str] = "MOV {0}, {1}"
 
@@ -136,9 +129,7 @@ class IncwRp(Instruction):
 	match: ClassVar[int] = 0b10000000
 	mmask: ClassVar[int] = 0b11110011
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=2, bits=2, styler=styler.reg16, name="rp"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.Reg16(offset=2, name="rp"),)
 	format: ClassVar[str] = "INCW {0}"
 
 
@@ -149,9 +140,7 @@ class DbnzBAddrRel(Instruction):
 	match: ClassVar[int] = 0b00110110_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=0, bits=8, styler=styler.addr_pcrel, name="addr16"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
 	format: ClassVar[str] = "DBNZ B, {0}"
 
 
@@ -162,9 +151,7 @@ class DbnzCAddrRel(Instruction):
 	match: ClassVar[int] = 0b00110100_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=0, bits=8, styler=styler.addr_pcrel, name="addr16"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
 	format: ClassVar[str] = "DBNZ C, {0}"
 
 
@@ -176,8 +163,8 @@ class DbnzSaddrAddrRel(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=8, bits=8, styler=styler.addr_short, name="saddr"),
-		FieldB(offset=0, bits=8, styler=styler.addr_pcrel, name="addr16"),
+		field.SAddr(offset=8, name="saddr"),
+		field.JAddrRel(offset=0, name="addr16"),
 	)
 	format: ClassVar[str] = "DBNZ {0}, {1}"
 
@@ -189,9 +176,7 @@ class MovwAxRp(Instruction):
 	match: ClassVar[int] = 0b11010000
 	mmask: ClassVar[int] = 0b11110011
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=2, bits=2, styler=styler.reg16, name="rp"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.Reg16(offset=2, name="rp"),)
 	format: ClassVar[str] = "MOVW AX, {0}"
 
 
@@ -202,9 +187,7 @@ class CmpwAxWord(Instruction):
 	match: ClassVar[int] = 0b11100010_00000000_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldW(offset_bytes=0, styler=styler.imm16, name="word"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.Imm16(name="word"),)
 	format: ClassVar[str] = "CMPW AX, {0}"
 
 
@@ -215,9 +198,7 @@ class BzAddrRel(Instruction):
 	match: ClassVar[int] = 0b00111100_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=0, bits=8, styler=styler.addr_pcrel, name="addr16"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
 	format: ClassVar[str] = "BZ {0}"
 
 
@@ -228,9 +209,7 @@ class BrAddrRel(Instruction):
 	match: ClassVar[int] = 0b00110000_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
-	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=0, bits=8, styler=styler.addr_pcrel, name="addr16"),
-	)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0, name="addr16"),)
 	format: ClassVar[str] = "BR {0}"
 
 
@@ -242,8 +221,8 @@ class CmpSaddrByte(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		FieldB(offset=8, bits=8, styler=styler.addr_short, name="saddr"),
-		FieldB(offset=0, bits=8, styler=styler.imm8, name="byte"),
+		field.SAddr(offset=8, name="saddr"),
+		field.Imm8(offset=0, name="byte"),
 	)
 	format: ClassVar[str] = "CMP {0}, {1}"
 

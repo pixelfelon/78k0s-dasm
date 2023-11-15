@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from typing import ClassVar, Sequence, Type, TypeVar
 
-from k0s_dasm.styler import Styler
 from k0s_dasm.util import fmthex
 
 
@@ -12,9 +11,20 @@ class Program:
 	"""Assembly program and other flash contents."""
 
 	flash: bytearray
+	"""The full flash data."""
+
 	pc: int = 0
+	"""A program counter mainly used during analysis."""
+
 	instrs: dict[int, "Instruction"] = field(default_factory=dict)
+	"""
+	Instructions found in the program. Keys are absolute addresses.
+
+	No particular order or contiguity.
+	"""
+
 	labels: dict[int, str] = field(default_factory=dict)
+	"""Labels found in the program. Keys are absolute addresses."""
 
 
 _T = TypeVar("_T", bound="Instruction")
@@ -52,7 +62,7 @@ class Instruction:
 
 	word: int
 	pc: int
-	fields: dict["Field", int]  # order as per field_defs
+	fields: dict["Field", "Operand"]  # order as per field_defs
 	program: Program
 
 	@classmethod
@@ -77,19 +87,20 @@ class Instruction:
 			return None
 		# else, matched.
 
-		if addr is None:
-			program.pc += cls.bytecount
-
-		fields: dict[Field, int] = {}
-		for fdef in cls.field_defs:
-			fields[fdef] = fdef.from_inst_word(word)
-
-		return cls(
+		fields: dict[Field, Operand] = {}
+		out = cls(
 			word=word,
 			pc=pc,
 			fields=fields,
 			program=program,
 		)
+
+		for fdef in cls.field_defs:
+			fields[fdef] = fdef.from_inst_word(word, out)
+
+		if addr is None:
+			program.pc += cls.bytecount
+		return out
 
 	@staticmethod
 	def autoload(program: Program, addr: int | None = None) -> "Instruction":
@@ -133,7 +144,7 @@ class Instruction:
 		"""Render instruction mnemonic with field values."""
 		ren_fields: list[str] = []
 		for fdef in self.field_defs:
-			ren_fields.append(fdef.styler(self.fields[fdef], self))
+			ren_fields.append(self.fields[fdef].render())
 		return self.format.format(*ren_fields)
 
 
@@ -141,39 +152,43 @@ class Instruction:
 class Field:
 	"""Abstract base field."""
 
-	styler: Styler
 	name: str
+	"""A short name for this field; should match the mnemonic."""
 
-	def from_inst_word(self, word: int) -> int:
+	is_branch: ClassVar[bool] = False
+	"""True iff the value is an absolute address that may be jumped to."""
+
+	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
 		"""Load field word from instruction word."""
 		raise NotImplementedError
 
-
-@dataclass(frozen=True)
-class FieldB(Field):
-	"""N-bit unaligned field."""
-
-	offset: int
-	bits: int
-
-	def from_inst_word(self, word: int) -> int:
-		"""Load field word from instruction word."""
-		mask = (2**self.bits) - 1
-		fword = (word >> self.offset) & mask
-		assert isinstance(fword, int), "MyPy was right i guess"
-		return fword
+	# noinspection PyMethodMayBeStatic
+	def render(self, val: int, inst: "Instruction", /) -> str:
+		"""Render the value based on the type of the field."""
+		# Neutral default.
+		return str(val)
 
 
-@dataclass(frozen=True)
-class FieldW(Field):
-	"""Two-byte big-endian byte-aligned field."""
+@dataclass
+class Operand:
+	"""Instruction operand, i.e. unique instantiation of a specific field."""
 
-	offset_bytes: int
+	fdef: Field
+	"""The relevant field definition."""
 
-	def from_inst_word(self, word: int) -> int:
-		"""Load field word from instruction word."""
-		offset = self.offset_bytes * 8
-		byte_h = (word >> offset) & 0xFF
-		byte_l = (word >> (offset + 8)) & 0xFF
-		fword = byte_l | (byte_h << 8)
-		return fword
+	inst: Instruction
+	"""The specific instruction this field belongs to."""
+
+	val: int
+	"""
+	The user-preferred form of the operand value.
+
+	This may not be the actual value encoded in the opcode, e.g. for PC-relative
+	or short addresses. If the value displayed in the assembly mnemonic is
+	numeric, this must be that value, especially that any address values will
+	be stored and shown as absolute. Enums are less defined.
+	"""
+
+	def render(self) -> str:
+		"""Render own value based on the field definition."""
+		return self.fdef.render(self.val, self.inst)
