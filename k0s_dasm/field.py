@@ -3,10 +3,11 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
+from k0s_dasm.base import Field, Operand
 from k0s_dasm.defs import UPD78F9202_SFR
 from k0s_dasm.defs import Reg8 as _EnumReg8
 from k0s_dasm.defs import Reg16 as _EnumReg16
-from k0s_dasm.ibase import Field, Instruction, Operand
+from k0s_dasm.ibase import Instruction
 
 
 @dataclass(frozen=True)

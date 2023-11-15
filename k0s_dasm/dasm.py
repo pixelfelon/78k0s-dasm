@@ -1,7 +1,8 @@
 """Disassembly harness script."""
 
+from k0s_dasm.base import Program
 from k0s_dasm.defs import PROG_BASE
-from k0s_dasm.ibase import Instruction, Program
+from k0s_dasm.ibase import Instruction
 from k0s_dasm.util import fmthex
 
 with open(r"C:\Users\jrowley\Downloads\BP10140_41807201810293003049.bin", "rb") as f:

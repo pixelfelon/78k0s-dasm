@@ -1,30 +1,13 @@
 """Instruction type definitions."""
 
-from dataclasses import dataclass, field
-from typing import ClassVar, Sequence, Type, TypeVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar, Sequence, Type, TypeVar
 
+from k0s_dasm.flow import Forward as FlowForward
 from k0s_dasm.util import fmthex
 
-
-@dataclass
-class Program:
-	"""Assembly program and other flash contents."""
-
-	flash: bytearray
-	"""The full flash data."""
-
-	pc: int = 0
-	"""A program counter mainly used during analysis."""
-
-	instrs: dict[int, "Instruction"] = field(default_factory=dict)
-	"""
-	Instructions found in the program. Keys are absolute addresses.
-
-	No particular order or contiguity.
-	"""
-
-	labels: dict[int, str] = field(default_factory=dict)
-	"""Labels found in the program. Keys are absolute addresses."""
+if TYPE_CHECKING:
+	from k0s_dasm.base import Field, Flow, Operand, Program
 
 
 _T = TypeVar("_T", bound="Instruction")
@@ -43,7 +26,12 @@ class Instruction:
 	"""
 
 	mnemonic: ClassVar[str] = NotImplemented
-	"""Class constant: text representation of the instruction."""
+	"""
+	Class constant: text representation of the instruction format.
+
+	This is in the abstract case, with the names of the operands instead
+	of the actual values for an instance of the instruction.
+	"""
 
 	match: ClassVar[int] = NotImplemented
 	"""
@@ -61,8 +49,16 @@ class Instruction:
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
 	"""Class constant: tuple of Field instances for instruction fields."""
 
+	flow: ClassVar["Flow"] = FlowForward()
+	"""Class constant: instruction flow type."""
+
 	format: ClassVar[str] = NotImplemented
-	"""Class constant: format string with field entries."""
+	"""
+	Class constant: format string with entries for operands.
+
+	The format things (i.e. {0}, {1}) will be filled in with the string from
+	rendering that operand, with indices per ``field_defs``.
+	"""
 
 	word: int
 	"""Raw instruction word (8-32 bits)."""
@@ -88,14 +84,14 @@ class Instruction:
 	Preferred order is as per ``field_defs``.
 	"""
 
-	program: Program
+	program: "Program"
 	"""The containing Program."""
 
 	notes: str = ""
 	"""Notes or warnings from analysis."""
 
 	@classmethod
-	def load(cls: Type[_T], program: Program, addr: int | None = None) -> _T | None:
+	def load(cls: Type[_T], program: "Program", addr: int | None = None) -> _T | None:
 		"""
 		Attempt to match some program data to this instruction def.
 
@@ -121,20 +117,21 @@ class Instruction:
 		out = cls(
 			word=word,
 			pc=pc,
-			next=[pc_next],
+			next=tuple(),
 			operands=fields,
 			program=program,
 		)
 
 		for fdef in cls.field_defs:
 			fields[fdef] = fdef.from_inst_word(word, out)
+		out.next = out.flow.next(out)
 
 		if addr is None:
 			program.pc += cls.bytecount
 		return out
 
 	@staticmethod
-	def autoload(program: Program, addr: int | None = None) -> "Instruction":
+	def autoload(program: "Program", addr: int | None = None) -> "Instruction":
 		"""Attempt to match some program data to any instruction subclass."""
 		try:
 			# defs live here
@@ -149,6 +146,8 @@ class Instruction:
 
 		results: list[Instruction] = []
 		for cls in Instruction.__subclasses__():
+			if cls.mnemonic is NotImplemented or cls.match is NotImplemented:
+				continue  # intermediate class
 			result = cls.load(program, pc)
 			if result is not None:
 				results.append(result)
@@ -177,49 +176,3 @@ class Instruction:
 		for fdef in self.field_defs:
 			ren_fields.append(self.operands[fdef].render())
 		return self.format.format(*ren_fields)
-
-
-@dataclass(frozen=True)
-class Field:
-	"""Abstract base field."""
-
-	name: str
-	"""A short name for this field; should match the mnemonic."""
-
-	is_branch: ClassVar[bool] = False
-	"""True iff the value is an absolute address that may be jumped to."""
-
-	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
-		"""Load field word from instruction word."""
-		raise NotImplementedError
-
-	# noinspection PyMethodMayBeStatic
-	def render(self, val: int, inst: "Instruction", /) -> str:
-		"""Render the value based on the type of the field."""
-		# Neutral default.
-		return str(val)
-
-
-@dataclass
-class Operand:
-	"""Instruction operand, i.e. unique instantiation of a specific field."""
-
-	fdef: Field
-	"""The relevant field definition."""
-
-	inst: Instruction
-	"""The specific instruction this field belongs to."""
-
-	val: int
-	"""
-	The user-preferred form of the operand value.
-
-	This may not be the actual value encoded in the opcode, e.g. for PC-relative
-	or short addresses. If the value displayed in the assembly mnemonic is
-	numeric, this must be that value, especially that any address values will
-	be stored and shown as absolute. Enums are less defined.
-	"""
-
-	def render(self) -> str:
-		"""Render own value based on the field definition."""
-		return self.fdef.render(self.val, self.inst)

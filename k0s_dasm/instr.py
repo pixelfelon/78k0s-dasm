@@ -3,7 +3,8 @@
 from typing import ClassVar, Sequence
 
 from k0s_dasm import field
-from k0s_dasm.ibase import Field, Instruction
+from k0s_dasm.base import Field
+from k0s_dasm.ibase import Instruction
 
 
 class MovwRpWord(Instruction):
