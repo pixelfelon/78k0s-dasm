@@ -170,7 +170,7 @@ class _Wide(Field):
 
 	offset: int = 0  # always, afaict
 
-	def __post_init__(self):
+	def __post_init__(self) -> None:
 		assert self.offset % 8 == 0
 
 	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
