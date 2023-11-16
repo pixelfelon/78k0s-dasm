@@ -168,11 +168,14 @@ class BitIdx3(_Short):
 class _Wide(Field):
 	"""Two-byte big-endian byte-aligned field."""
 
-	offset_bytes: int = 0  # always, afaict
+	offset: int = 0  # always, afaict
+
+	def __post_init__(self):
+		assert self.offset % 8 == 0
 
 	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
 		"""Load field word from instruction word."""
-		offset = self.offset_bytes * 8
+		offset = self.offset
 		byte_h = (instr_word >> offset) & 0xFF
 		byte_l = (instr_word >> (offset + 8)) & 0xFF
 		fword = byte_l | (byte_h << 8)
