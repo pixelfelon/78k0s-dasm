@@ -36,8 +36,8 @@ class Program:
 class Field:
 	"""Abstract base field."""
 
-	#name: str
-	#"""A short name for this field; should match the mnemonic."""
+	# name: str
+	# """A short name for this field; should match the mnemonic."""
 
 	is_branch: ClassVar[bool] = False
 	"""True iff the value is an absolute address that may be jumped to."""
