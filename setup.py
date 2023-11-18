@@ -66,7 +66,7 @@ setup(
 	cmdclass={"checkfmt": CheckFormat},
 	extras_require={
 		"dev": [
-			"black-with-tabs",
+			"black-with-tabs[jupyter]",
 			"flake8",
 			"flake8-docstrings",
 			"flake8-isort",

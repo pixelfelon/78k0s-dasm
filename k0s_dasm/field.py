@@ -118,6 +118,8 @@ class Addr5(_Short):
 	"""5-bit unaligned field for call table index."""
 
 	bits: ClassVar[int] = 5
+	# is_branch??? Sort of, but call table isn't const, and should be
+	# analyzed separately.
 
 	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
 		"""Load field word from instruction word."""
