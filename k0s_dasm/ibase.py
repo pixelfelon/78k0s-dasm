@@ -91,7 +91,7 @@ class Instruction:
 	"""Notes or warnings from analysis."""
 
 	@classmethod
-	def load(cls: Type[_T], program: "Program", addr: int | None = None) -> _T | None:
+	def load(cls: Type[_T], program: "Program", pc: int) -> _T | None:
 		"""
 		Attempt to match some program data to this instruction def.
 
@@ -99,10 +99,6 @@ class Instruction:
 		then updated according to the actual word length. If a start address
 		is provided, the Program's PC is ignored and not updated.
 		"""
-		if addr is None:
-			pc = program.pc
-		else:
-			pc = addr
 		pc_next = pc + cls.bytecount
 		data = program.flash[pc:pc_next]
 
@@ -125,24 +121,28 @@ class Instruction:
 		for fdef in cls.field_defs:
 			fields[fdef] = fdef.from_inst_word(word, out)
 		out.next = out.flow.next(out)
+		if not out._check_fields():
+			return None
 
-		if addr is None:
-			program.pc += cls.bytecount
 		return out
 
+	# noinspection PyMethodMayBeStatic
+	def _check_fields(self) -> bool:
+		"""
+		Check if field values are allowed for this definition.
+
+		Called as part of the match/load process, if False, the match fails.
+		"""
+		return True
+
 	@staticmethod
-	def autoload(program: "Program", addr: int | None = None) -> "Instruction":
+	def autoload(program: "Program", pc: int) -> "Instruction":
 		"""Attempt to match some program data to any instruction subclass."""
 		try:
 			# defs live here
 			import k0s_dasm.instr  # noqa
 		except ImportError:
 			pass
-
-		if addr is None:
-			pc = program.pc
-		else:
-			pc = addr
 
 		results: list[Instruction] = []
 		for cls in Instruction.__subclasses__():
@@ -166,8 +166,6 @@ class Instruction:
 
 		else:
 			result = results[0]
-			if addr is None:
-				program.pc += result.bytecount
 			return result
 
 	def render(self) -> str:

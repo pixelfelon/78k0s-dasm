@@ -33,6 +33,11 @@ PROG_BASE = 0x82
 SADDR_BASE = 0xFE20
 SFR_BASE = 0xFF00
 
+SP_MAGIC_SADDR = 0x1C
+SP_MAGIC_ADDR = 0xFF1C
+PSW_MAGIC_SADDR = 0x1E
+PSW_MAGIC_ADDR = 0xFF1E
+
 UPD78F9202_VECT: dict[int, str] = {
 	0x00: "Reset",
 	0x02: "Unused1",
@@ -58,6 +63,7 @@ UPD78F9202_SFR: dict[int, str] = {
 	0xFF18: "ADCR",  # pure 16-bit
 	0xFF1A: "ADCRH",
 	# 0xFF1C: "SP",  # ??? seems true based on some funny instructions.
+	# 0xFF1E: "PSW",  # as with SP
 	0xFF22: "PM2",
 	0xFF23: "PM3",
 	0xFF24: "PM4",

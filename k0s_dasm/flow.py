@@ -61,22 +61,24 @@ class Return(ComputedUnknown):
 
 	def next(self, inst: "Instruction", /) -> Sequence[int]:
 		"""Get no addresses (we don't know where to go)."""
-		inst.notes.append("INFO: Function return.")
+		# inst.notes.append("INFO: Function return.")
 		return tuple()
 
 
+@dataclass(frozen=True)
 class ComputedCallT(Flow):
 	"""Computed branch via call table."""
 
 	callt_idx_field_idx: int = 0
 
 	def next(self, inst: "Instruction", /) -> Sequence[int]:
-		"""Get no addresses (we don't know where to go)."""
+		"""Get forward address and relevant address from call table."""
+		forward = inst.pc + inst.bytecount
 		callt_idx = inst.operands[inst.field_defs[self.callt_idx_field_idx]].val
+		callt_addr = inst.program.flash_word(callt_idx)
 		inst.notes.append(
-			f"INFO: Computed branch via call table initial value (@{callt_idx:02X}H)."
+			f"INFO: Initial CALLT[{callt_idx:02X}H] -> !{callt_addr:04X}H"
 		)
-		callt_addr = int.from_bytes(
-			inst.program.flash[callt_idx : callt_idx + 2], "little", signed=False
-		)
-		return (callt_addr,)
+		# N.B.: It's possible the program could change the call table later,
+		# but this would be a major operation as it's in flash.
+		return forward, callt_addr

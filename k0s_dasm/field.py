@@ -43,6 +43,8 @@ class SFR(_Short):
 	The converted address is 16-bit absolute.
 	"""
 
+	is_addr: ClassVar[bool] = True
+
 	bits: ClassVar[int] = 8
 
 	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
@@ -55,6 +57,7 @@ class SFR(_Short):
 		"""Style SFR address (sfr) operand."""
 		# TODO: not assume which processor
 		if val in UPD78F9202_SFR:
+			inst.notes.append(f"SFR_{val:04X}H -> {UPD78F9202_SFR[val]}")
 			return UPD78F9202_SFR[val]
 		else:
 			return f"SFR_{val:04X}H?"
@@ -67,6 +70,8 @@ class SAddr(_Short):
 
 	The converted address is 16-bit absolute.
 	"""
+
+	is_addr: ClassVar[bool] = True
 
 	bits: ClassVar[int] = 8
 
@@ -88,8 +93,10 @@ class SAddr(_Short):
 class JAddrRel(_Short):
 	"""8-bit unaligned field for PC-relative address (jdisp)."""
 
+	is_addr: ClassVar[bool] = True
+	is_branch: ClassVar[bool] = True
+
 	bits: ClassVar[int] = 8
-	is_branch: ClassVar[bool] = True  # actually true for all such instructions.
 
 	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
 		"""Load field word from instruction word."""
@@ -111,8 +118,6 @@ class Addr5(_Short):
 	"""5-bit unaligned field for call table index."""
 
 	bits: ClassVar[int] = 5
-	# is_branch??? Sort of, but call table isn't const, and should be
-	# analyzed separately.
 
 	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
 		"""Load field word from instruction word."""
@@ -163,6 +168,10 @@ class BitIdx3(_Short):
 
 	bits: ClassVar[int] = 3
 
+	def render(self, val: int, inst: "Instruction", /) -> str:
+		"""Style 3-bit bit offset (bit) operand."""
+		return f".{val}"
+
 
 @dataclass(frozen=True)
 class _Wide(Field):
@@ -195,6 +204,8 @@ class Imm16(_Wide):
 class Addr16(_Wide):
 	"""16-bit byte-aligned field for absolute DATA address."""
 
+	is_addr: ClassVar[bool] = True
+
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style absolute address (addr16) operand."""
 		return f"!{val:04X}H"
@@ -204,6 +215,7 @@ class Addr16(_Wide):
 class JAddr16(_Wide):
 	"""16-bit byte-aligned field for absolute BRANCH address."""
 
+	is_addr: ClassVar[bool] = True
 	is_branch: ClassVar[bool] = True
 
 	def render(self, val: int, inst: "Instruction", /) -> str:
