@@ -31,13 +31,28 @@ class Program:
 	labels: dict[int, str] = field(default_factory=dict)
 	"""Labels found in the program. Keys are absolute addresses."""
 
+	def flash_word(self, addr: int) -> int:
+		"""Read 16-bit big-endian word from the flash data."""
+		if not 0 <= addr <= (len(self.flash) - 2):
+			raise ValueError(f"Address OOB for 16-bit word: 0x{addr:04X}")
+		return int.from_bytes(self.flash[addr : addr + 2], "little", signed=False)
+
+	def entry_points(self) -> Sequence[int]:
+		"""Get all defined entry points in the vector and call tables."""
+		out: list[int] = []
+		for addr in range(0, 0x80, 2):
+			vect = self.flash_word(addr)
+			if vect != 0xFFFF:
+				out.append(vect)
+		return out
+
 
 @dataclass(frozen=True)
 class Field:
 	"""Abstract base field."""
 
-	# name: str
-	# """A short name for this field; should match the mnemonic."""
+	is_addr: ClassVar[bool] = False
+	"""True iff the value is an absolute address."""
 
 	is_branch: ClassVar[bool] = False
 	"""True iff the value is an absolute address that may be jumped to."""

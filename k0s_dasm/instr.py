@@ -3,7 +3,16 @@
 from typing import ClassVar, Sequence
 
 from k0s_dasm import field
-from k0s_dasm.base import Field
+from k0s_dasm.base import Field, Flow
+from k0s_dasm.defs import PSW_MAGIC_ADDR, SP_MAGIC_ADDR, Reg8, Reg16
+from k0s_dasm.flow import (
+	CallReturn,
+	ComputedCallT,
+	ComputedUnknown,
+	ConditionalBranch,
+	Return,
+	UnconditionalBranch,
+)
 from k0s_dasm.ibase import Instruction
 
 
@@ -34,6 +43,14 @@ class MOVsaddrbyte(Instruction):
 	)
 	format: ClassVar[str] = "MOV {0}, {1}"
 
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
+
 
 class MOVsfrbyte(Instruction):
 	"""MOV sfr, #byte."""
@@ -59,6 +76,14 @@ class MOVAr(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.Reg8(offset=1),)
 	format: ClassVar[str] = "MOV A, {0}"
 
+	def _check_fields(self) -> bool:
+		"""Check that r is not A."""
+		r = self.operands[self.field_defs[0]].val
+		if r == Reg8.A:
+			return False
+		else:
+			return True
+
 
 class MOVrA(Instruction):
 	"""MOV r, A."""
@@ -69,6 +94,14 @@ class MOVrA(Instruction):
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.Reg8(offset=1),)
 	format: ClassVar[str] = "MOV {0}, A"
+
+	def _check_fields(self) -> bool:
+		"""Check that r is not A."""
+		r = self.operands[self.field_defs[0]].val
+		if r == Reg8.A:
+			return False
+		else:
+			return True
 
 
 class MOVAsaddr(Instruction):
@@ -81,6 +114,14 @@ class MOVAsaddr(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.SAddr(offset=0),)
 	format: ClassVar[str] = "MOV A, {0}"
 
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
+
 
 class MOVsaddrA(Instruction):
 	"""MOV saddr, A."""
@@ -91,6 +132,14 @@ class MOVsaddrA(Instruction):
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.SAddr(offset=0),)
 	format: ClassVar[str] = "MOV {0}, A"
+
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
 
 
 class MOVAsfr(Instruction):
@@ -257,6 +306,14 @@ class XCHAr(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.Reg8(offset=1),)
 	format: ClassVar[str] = "XCH A, {0}"
 
+	def _check_fields(self) -> bool:
+		"""Check that r is not A or X."""
+		r = self.operands[self.field_defs[0]].val
+		if r == Reg8.A or r == Reg8.X:
+			return False
+		else:
+			return True
+
 
 class XCHAsaddr(Instruction):
 	"""XCH A, saddr."""
@@ -337,6 +394,14 @@ class MOVWAXsaddrp(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.SAddr(offset=0),)
 	format: ClassVar[str] = "MOVW AX, {0}"
 
+	def _check_fields(self) -> bool:
+		"""Check that saddrp is not 0b00011100 (which refers to SP)."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == SP_MAGIC_ADDR:
+			return False
+		else:
+			return True
+
 
 class MOVWsaddrpAX(Instruction):
 	"""MOVW saddrp, AX."""
@@ -347,6 +412,14 @@ class MOVWsaddrpAX(Instruction):
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.SAddr(offset=0),)
 	format: ClassVar[str] = "MOVW {0}, AX"
+
+	def _check_fields(self) -> bool:
+		"""Check that saddrp is not 0b00011100 (which refers to SP)."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == SP_MAGIC_ADDR:
+			return False
+		else:
+			return True
 
 
 class MOVWAXrp(Instruction):
@@ -359,6 +432,14 @@ class MOVWAXrp(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.Reg16(offset=2),)
 	format: ClassVar[str] = "MOVW AX, {0}"
 
+	def _check_fields(self) -> bool:
+		"""Check that rp is not AX."""
+		rp = self.operands[self.field_defs[0]].val
+		if rp == Reg16.AX:
+			return False
+		else:
+			return True
+
 
 class MOVWrpAX(Instruction):
 	"""MOVW rp, AX."""
@@ -370,6 +451,14 @@ class MOVWrpAX(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.Reg16(offset=2),)
 	format: ClassVar[str] = "MOVW {0}, AX"
 
+	def _check_fields(self) -> bool:
+		"""Check that rp is not AX."""
+		rp = self.operands[self.field_defs[0]].val
+		if rp == Reg16.AX:
+			return False
+		else:
+			return True
+
 
 class XCHWAXrp(Instruction):
 	"""XCHW AX, rp."""
@@ -380,6 +469,14 @@ class XCHWAXrp(Instruction):
 	bytecount: ClassVar[int] = 1
 	field_defs: ClassVar[Sequence["Field"]] = (field.Reg16(offset=2),)
 	format: ClassVar[str] = "XCHW AX, {0}"
+
+	def _check_fields(self) -> bool:
+		"""Check that rp is not AX."""
+		rp = self.operands[self.field_defs[0]].val
+		if rp == Reg16.AX:
+			return False
+		else:
+			return True
 
 
 class ADDAbyte(Instruction):
@@ -1173,10 +1270,18 @@ class SETsaddrbit(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=12),
 		field.SAddr(offset=0),
+		field.BitIdx3(offset=12),
 	)
 	format: ClassVar[str] = "SET1 {0}{1}"
+
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
 
 
 class SETsfrbit(Instruction):
@@ -1187,8 +1292,8 @@ class SETsfrbit(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=12),
 		field.SFR(offset=0),
+		field.BitIdx3(offset=12),
 	)
 	format: ClassVar[str] = "SET1 {0}{1}"
 
@@ -1214,6 +1319,14 @@ class SETPSWbit(Instruction):
 	field_defs: ClassVar[Sequence["Field"]] = (field.BitIdx3(offset=12),)
 	format: ClassVar[str] = "SET1 PSW{0}"
 
+	def _check_fields(self) -> bool:
+		"""Check that bit is not 7 (IE)."""
+		bit = self.operands[self.field_defs[0]].val
+		if bit == 7:
+			return False
+		else:
+			return True
+
 
 class SETHLbit(Instruction):
 	"""SET1 [HL].bit."""
@@ -1234,10 +1347,18 @@ class CLRsaddrbit(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=12),
 		field.SAddr(offset=0),
+		field.BitIdx3(offset=12),
 	)
 	format: ClassVar[str] = "CLR1 {0}{1}"
+
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
 
 
 class CLRsfrbit(Instruction):
@@ -1248,8 +1369,8 @@ class CLRsfrbit(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=12),
 		field.SFR(offset=0),
+		field.BitIdx3(offset=12),
 	)
 	format: ClassVar[str] = "CLR1 {0}{1}"
 
@@ -1274,6 +1395,14 @@ class CLRPSWbit(Instruction):
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (field.BitIdx3(offset=12),)
 	format: ClassVar[str] = "CLR1 PSW{0}"
+
+	def _check_fields(self) -> bool:
+		"""Check that bit is not 7 (IE)."""
+		bit = self.operands[self.field_defs[0]].val
+		if bit == 7:
+			return False
+		else:
+			return True
 
 
 class CLRHLbit(Instruction):
@@ -1328,6 +1457,7 @@ class CALLaddr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (field.Addr16(offset=0),)
+	flow: ClassVar[Flow] = CallReturn(branch_field_idx=0)
 	format: ClassVar[str] = "CALL {0}"
 
 
@@ -1339,6 +1469,7 @@ class CALLTaddr(Instruction):
 	mmask: ClassVar[int] = 0b11000001
 	bytecount: ClassVar[int] = 1
 	field_defs: ClassVar[Sequence["Field"]] = (field.Addr5(offset=1),)
+	flow: ClassVar[Flow] = ComputedCallT(callt_idx_field_idx=0)
 	format: ClassVar[str] = "CALLT {0}"
 
 
@@ -1350,6 +1481,7 @@ class RET(Instruction):
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
+	flow: ClassVar[Flow] = Return()
 	format: ClassVar[str] = "RET"
 
 
@@ -1361,6 +1493,7 @@ class RETI(Instruction):
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
+	flow: ClassVar[Flow] = Return()
 	format: ClassVar[str] = "RETI"
 
 
@@ -1409,25 +1542,25 @@ class POPrp(Instruction):
 
 
 class MOVWSPAX(Instruction):
-	"""MOVW SP,AX."""
+	"""MOVW SP, AX."""
 
-	mnemonic: ClassVar[str] = "MOVW SP,AX"
+	mnemonic: ClassVar[str] = "MOVW SP, AX"
 	match: ClassVar[int] = 0b11100110_00011100
 	mmask: ClassVar[int] = 0b11111111_11111111
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
-	format: ClassVar[str] = "MOVW SP,AX"
+	format: ClassVar[str] = "MOVW SP, AX"
 
 
 class MOVWAXSP(Instruction):
-	"""MOVW AX,SP."""
+	"""MOVW AX, SP."""
 
-	mnemonic: ClassVar[str] = "MOVW AX,SP"
+	mnemonic: ClassVar[str] = "MOVW AX, SP"
 	match: ClassVar[int] = 0b11010110_00011100
 	mmask: ClassVar[int] = 0b11111111_11111111
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
-	format: ClassVar[str] = "MOVW AX,SP"
+	format: ClassVar[str] = "MOVW AX, SP"
 
 
 class BRaddr(Instruction):
@@ -1438,6 +1571,7 @@ class BRaddr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
 	field_defs: ClassVar[Sequence["Field"]] = (field.Addr16(offset=0),)
+	flow: ClassVar[Flow] = UnconditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BR {0}"
 
 
@@ -1449,6 +1583,7 @@ class BRReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = UnconditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BR {0}"
 
 
@@ -1460,6 +1595,7 @@ class BRAX(Instruction):
 	mmask: ClassVar[int] = 0b11111111
 	bytecount: ClassVar[int] = 1
 	field_defs: ClassVar[Sequence["Field"]] = tuple()
+	flow: ClassVar[Flow] = ComputedUnknown()
 	format: ClassVar[str] = "BR AX"
 
 
@@ -1471,6 +1607,7 @@ class BCReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BC {0}"
 
 
@@ -1482,6 +1619,7 @@ class BNCReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BNC {0}"
 
 
@@ -1493,6 +1631,7 @@ class BZReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BZ {0}"
 
 
@@ -1504,6 +1643,7 @@ class BNZReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BNZ {0}"
 
 
@@ -1515,11 +1655,20 @@ class BTsaddrbitReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000_00000000
 	bytecount: ClassVar[int] = 4
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=20),
 		field.SAddr(offset=8),
+		field.BitIdx3(offset=20),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=2)
 	format: ClassVar[str] = "BT {0}{1}, {2}"
+
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
 
 
 class BTsfrbitReladdr(Instruction):
@@ -1530,10 +1679,11 @@ class BTsfrbitReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000_00000000
 	bytecount: ClassVar[int] = 4
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=20),
 		field.SFR(offset=8),
+		field.BitIdx3(offset=20),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=2)
 	format: ClassVar[str] = "BT {0}{1}, {2}"
 
 
@@ -1548,6 +1698,7 @@ class BTAbitReladdr(Instruction):
 		field.BitIdx3(offset=12),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=1)
 	format: ClassVar[str] = "BT A{0}, {1}"
 
 
@@ -1562,6 +1713,7 @@ class BTPSWbitReladdr(Instruction):
 		field.BitIdx3(offset=20),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=1)
 	format: ClassVar[str] = "BT PSW{0}, {1}"
 
 
@@ -1573,11 +1725,20 @@ class BFsaddrbitReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000_00000000
 	bytecount: ClassVar[int] = 4
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=20),
 		field.SAddr(offset=8),
+		field.BitIdx3(offset=20),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=2)
 	format: ClassVar[str] = "BF {0}{1}, {2}"
+
+	def _check_fields(self) -> bool:
+		"""Check that saddr is not PSW."""
+		addr = self.operands[self.field_defs[0]].val
+		if addr == PSW_MAGIC_ADDR:
+			return False
+		else:
+			return True
 
 
 class BFsfrbitReladdr(Instruction):
@@ -1588,10 +1749,11 @@ class BFsfrbitReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_10001111_00000000_00000000
 	bytecount: ClassVar[int] = 4
 	field_defs: ClassVar[Sequence["Field"]] = (
-		field.BitIdx3(offset=20),
 		field.SFR(offset=8),
+		field.BitIdx3(offset=20),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=2)
 	format: ClassVar[str] = "BF {0}{1}, {2}"
 
 
@@ -1606,6 +1768,7 @@ class BFAbitReladdr(Instruction):
 		field.BitIdx3(offset=12),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=1)
 	format: ClassVar[str] = "BF A{0}, {1}"
 
 
@@ -1620,6 +1783,7 @@ class BFPSWbitReladdr(Instruction):
 		field.BitIdx3(offset=20),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=1)
 	format: ClassVar[str] = "BF PSW{0}, {1}"
 
 
@@ -1631,6 +1795,7 @@ class DBNZBReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "DBNZ B, {0}"
 
 
@@ -1642,6 +1807,7 @@ class DBNZCReladdr(Instruction):
 	mmask: ClassVar[int] = 0b11111111_00000000
 	bytecount: ClassVar[int] = 2
 	field_defs: ClassVar[Sequence["Field"]] = (field.JAddrRel(offset=0),)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "DBNZ C, {0}"
 
 
@@ -1656,6 +1822,7 @@ class DBNZsaddrReladdr(Instruction):
 		field.SAddr(offset=8),
 		field.JAddrRel(offset=0),
 	)
+	flow: ClassVar[Flow] = ConditionalBranch(branch_field_idx=1)
 	format: ClassVar[str] = "DBNZ {0}, {1}"
 
 
