@@ -4,7 +4,7 @@ from k0s_dasm.base import Program
 from k0s_dasm.ibase import Instruction
 from k0s_dasm.util import fmthex
 
-with open(r"C:\Users\jrowley\Downloads\BP10140_41807201810293003049.bin", "rb") as f:
+with open(r"your_file_here.bin", "rb") as f:
 	prog = Program(bytearray(f.read()))
 	pcs: list[int] = []
 	pcs.extend(prog.entry_points())
