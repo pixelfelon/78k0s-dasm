@@ -1,13 +1,17 @@
 """Disassembly harness script."""
 
+import sys
+
 from k0s_dasm.base import Program
 from k0s_dasm.ibase import Instruction
 from k0s_dasm.util import fmthex
 
-with open(r"C:\Users\jrowley\Downloads\BP10140_41807201810293003049.bin", "rb") as f:
+print(sys.argv[1])
+with open(sys.argv[1], "rb") as f:
 	prog = Program(bytearray(f.read()))
 	pcs: list[int] = []
 	pcs.extend(prog.entry_points())
+	pcs = [0x196, 0x8100]
 	while True:
 		# multi flow loop
 		try:
@@ -25,7 +29,7 @@ with open(r"C:\Users\jrowley\Downloads\BP10140_41807201810293003049.bin", "rb") 
 				instr = Instruction.autoload(prog, pc)
 			except ValueError:
 				badword = prog.flash[pc : pc + 4]
-				print(f"; BAD INSTRUCTION AT 0x{pc:04X}: {fmthex(badword)} ...")
+				print(f"; BAD INSTRUCTION AT 0x{pc:04X}: {fmthex(badword)} {int.from_bytes(badword, 'big'):032b}...")
 				break
 
 			word = prog.flash[instr.pc : instr.pc + instr.bytecount]
@@ -33,6 +37,9 @@ with open(r"C:\Users\jrowley\Downloads\BP10140_41807201810293003049.bin", "rb") 
 			print(f"\t{instr.render():<30};{instr.pc:04X}  {fmthex(word)}")
 			for note in instr.notes:
 				print(f"\t                              ; {note}")
+
+			if word == b"\xFF":
+				break
 
 			if len(instr.next) > 1:
 				pcs.extend(instr.next[1:])

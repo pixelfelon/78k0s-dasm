@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 from k0s_dasm.base import Field, Operand
-from k0s_dasm.defs import UPD78F9202_SFR
+from k0s_dasm.defs import UPD78F0515_SFR
 from k0s_dasm.defs import Reg8 as _EnumReg8
 from k0s_dasm.defs import Reg16 as _EnumReg16
 from k0s_dasm.ibase import Instruction
@@ -56,9 +56,9 @@ class SFR(_Short):
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style SFR address (sfr) operand."""
 		# TODO: not assume which processor
-		if val in UPD78F9202_SFR:
-			inst.notes.append(f"SFR_{val:04X}H -> {UPD78F9202_SFR[val]}")
-			return UPD78F9202_SFR[val]
+		if val in UPD78F0515_SFR:
+			inst.notes.append(f"SFR_{val:04X}H -> {UPD78F0515_SFR[val]}")
+			return UPD78F0515_SFR[val]
 		else:
 			return f"SFR_{val:04X}H?"
 
@@ -223,3 +223,48 @@ class JAddr16(_Wide):
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style absolute address (addr16) operand."""
 		return f"!{val:04X}H"
+
+
+@dataclass(frozen=True)
+class JAddr11(Field):
+	"""Split 11-bit field for absolute + 0x800 BRANCH address."""
+
+	offsl: int = 0  # low 8 bits
+	offsh: int = 12  # high 3 bits
+	# higher 5 bits fixed to 0b00001
+
+	is_addr: ClassVar[bool] = True
+	is_branch: ClassVar[bool] = True
+
+	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
+		"""Load field word from instruction word."""
+		nib_h = (instr_word >> self.offsh) & 0x7
+		byte_l = (instr_word >> self.offsl) & 0xFF
+		fword = byte_l | (nib_h << 8) | 0b00001000_00000000
+		return Operand(fdef=self, inst=inst, val=fword)
+
+	def render(self, val: int, inst: "Instruction", /) -> str:
+		"""Style absolute address (addr11) operand."""
+		return f"!{val:04X}H"
+
+
+@dataclass(frozen=True)
+class RB2(Field):
+	"""Split 2-bit field for register bank number."""
+
+	offsl: int = 3  # low bit
+	offsh: int = 5  # high bit
+
+	is_addr: ClassVar[bool] = True
+	is_branch: ClassVar[bool] = True
+
+	def from_inst_word(self, instr_word: int, inst: "Instruction", /) -> "Operand":
+		"""Load field word from instruction word."""
+		bit_h = (instr_word >> self.offsh) & 0x1
+		bit_l = (instr_word >> self.offsl) & 0x1
+		fword = bit_l | (bit_h << 1)
+		return Operand(fdef=self, inst=inst, val=fword)
+
+	def render(self, val: int, inst: "Instruction", /) -> str:
+		"""Style register bank (RBn) operand."""
+		return f"RB{val}"
