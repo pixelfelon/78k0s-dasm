@@ -58,10 +58,11 @@ class SFR(_Short):
 		"""Style SFR address (sfr) operand."""
 		# TODO: not assume which processor
 		if val in UPD78F0515_SFR:
-			inst.notes.append(f"SFR_{val:04X}H -> {UPD78F0515_SFR[val]}")
+			# inst.notes.append(f"SFR_{val:04X}H -> {UPD78F0515_SFR[val]}")
+			inst.smallnotes.append(f"sfr={val:04X}H")
 			return UPD78F0515_SFR[val]
 		else:
-			return f"SFR_{val:04X}H?"
+			return f"SFR_{val:04X}H"
 
 
 @dataclass(frozen=True)

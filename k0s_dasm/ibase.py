@@ -90,6 +90,18 @@ class Instruction:
 	notes: list[str] = field(default_factory=list)
 	"""Notes or warnings from analysis."""
 
+	smallnotes: list[str] = field(default_factory=list)
+	"""Short and sweet note(s) to display on the same line as the bytecode."""
+
+	_rendered: str | None = None
+	"""
+	Instruction render cache.
+	
+	We add useful notes during the rendering phase but also in other phases.
+	That's stupid... anyways we therefore only render it once so as to not
+	duplicate notes. So don't change it after rendering.
+	"""
+
 	@classmethod
 	def load(cls: Type[_T], program: "Program", pc: int) -> _T | None:
 		"""
@@ -170,7 +182,21 @@ class Instruction:
 
 	def render(self) -> str:
 		"""Render instruction mnemonic with field values."""
+		if self._rendered is not None:
+			return self._rendered
 		ren_fields: list[str] = []
 		for fdef in self.field_defs:
 			ren_fields.append(self.operands[fdef].render())
-		return self.format.format(*ren_fields)
+		self._rendered = self.format.format(*ren_fields)
+		return self._rendered
+
+	@property
+	def next_addr(self) -> int:
+		"""
+		Calculate the next address in memory after this instruction.
+
+		Keep in mind that this is not necessarily the next address that will be
+		executed, and for some instructions is never executed. Use the flows
+		field to analyze that.
+		"""
+		return self.pc + self.bytecount

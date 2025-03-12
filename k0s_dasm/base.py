@@ -31,6 +31,17 @@ class Program:
 	labels: dict[int, str] = field(default_factory=dict)
 	"""Labels found in the program. Keys are absolute addresses."""
 
+	branches: dict[int, int] = field(default_factory=dict)
+	"""
+	Branches found in the program. Key is source, value is dest.
+
+	This is branches caused as an explicit effect of any instruction, but not
+	those caused by simple forward flow.
+
+	No instruction in 78K0 has multiple destinations, other than forward flow
+	for conditionals, but we're ignoring that for this field.
+	"""
+
 	def flash_word(self, addr: int) -> int:
 		"""Read 16-bit big-endian word from the flash data."""
 		if not 0 <= addr <= (len(self.flash) - 2):
@@ -44,6 +55,23 @@ class Program:
 			vect = self.flash_word(addr)
 			if vect != 0xFFFF:
 				out.append(vect)
+		return out
+
+	def get_label(self, addr: int) -> str:
+		"""Get label for an address."""
+		if addr in self.labels:
+			return self.labels[addr]
+		else:
+			return f"label_{addr:04X}"
+
+	def branch_sources(self) -> dict[int, set[int]]:
+		"""Get mapping of branch destination to all sources."""
+		out: dict[int, set[int]] = {}
+		for source in self.branches:
+			dest = self.branches[source]
+			if dest not in out:
+				out[dest] = set()
+			out[dest].add(source)
 		return out
 
 
