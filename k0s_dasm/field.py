@@ -8,6 +8,7 @@ from k0s_dasm.defs import UPD78F0515_SFR
 from k0s_dasm.defs import Reg8 as _EnumReg8
 from k0s_dasm.defs import Reg16 as _EnumReg16
 from k0s_dasm.ibase import Instruction
+from k0s_dasm.util import fsl_remap
 
 
 @dataclass(frozen=True)
@@ -86,7 +87,11 @@ class SAddr(_Short):
 
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style short address (saddr) operand."""
-		return f"{val:04X}H"
+		if val in UPD78F0515_SFR:
+			inst.notes.append(f"saddr {val:04X}H -> {UPD78F0515_SFR[val]}")
+			return UPD78F0515_SFR[val]
+		else:
+			return f"{val:04X}H"
 
 
 @dataclass(frozen=True)
@@ -110,11 +115,15 @@ class JAddrRel(_Short):
 
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style PC-relative address (jdisp) operand."""
+		if val in inst.program.labels:
+			label = inst.program.labels[val]
+			inst.notes.append(f"{label} -> !{val:04X}H")
+			return label
 		return f"${val:04X}H"
 
 
 @dataclass(frozen=True)
-class Addr5(_Short):
+class JAddr5(_Short):
 	"""5-bit unaligned field for call table index."""
 
 	bits: ClassVar[int] = 5
@@ -210,7 +219,16 @@ class Addr16(_Wide):
 
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style absolute address (addr16) operand."""
-		return f"!{val:04X}H"
+		val = fsl_remap(val, inst)
+		if val in inst.program.labels:
+			label = inst.program.labels[val]
+			inst.notes.append(f"{label} -> !{val:04X}H")
+			return label
+		elif val in UPD78F0515_SFR:
+			inst.notes.append(f"addr16 {val:04X}H -> {UPD78F0515_SFR[val]}")
+			return UPD78F0515_SFR[val]
+		else:
+			return f"!{val:04X}H"
 
 
 @dataclass(frozen=True)
@@ -222,7 +240,13 @@ class JAddr16(_Wide):
 
 	def render(self, val: int, inst: "Instruction", /) -> str:
 		"""Style absolute address (addr16) operand."""
-		return f"!{val:04X}H"
+		val = fsl_remap(val, inst)
+		if val in inst.program.labels:
+			label = inst.program.labels[val]
+			inst.notes.append(f"{label} -> !{val:04X}H")
+			return label
+		else:
+			return f"!{val:04X}H"
 
 
 @dataclass(frozen=True)

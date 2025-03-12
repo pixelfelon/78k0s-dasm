@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Sequence
 
 from k0s_dasm.base import Flow
+from k0s_dasm.util import fsl_remap
 
 if TYPE_CHECKING:
 	from k0s_dasm.ibase import Instruction
@@ -28,6 +29,7 @@ class ConditionalBranch(Flow):
 		"""Get forward and branch instruction addresses."""
 		forward = inst.pc + inst.bytecount
 		branch = inst.operands[inst.field_defs[self.branch_field_idx]].val
+		branch = fsl_remap(branch, inst)
 		return forward, branch
 
 
@@ -44,6 +46,7 @@ class UnconditionalBranch(Flow):
 	def next(self, inst: "Instruction", /) -> Sequence[int]:
 		"""Get branch instruction address."""
 		branch = inst.operands[inst.field_defs[self.branch_field_idx]].val
+		branch = fsl_remap(branch, inst)
 		return (branch,)
 
 
@@ -76,6 +79,7 @@ class ComputedCallT(Flow):
 		forward = inst.pc + inst.bytecount
 		callt_idx = inst.operands[inst.field_defs[self.callt_idx_field_idx]].val
 		callt_addr = inst.program.flash_word(callt_idx)
+		callt_addr = fsl_remap(callt_addr, inst)
 		inst.notes.append(
 			f"INFO: Initial CALLT[{callt_idx:02X}H] -> !{callt_addr:04X}H"
 		)

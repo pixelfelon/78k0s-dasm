@@ -2341,7 +2341,7 @@ class CALLaddr16(Instruction):
 	match: ClassVar[int] = 0b10011010_00000000_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
-	field_defs: ClassVar[Sequence["Field"]] = (field.Addr16(offset=0),)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddr16(offset=0),)
 	flow: ClassVar[Flow] = CallReturn(branch_field_idx=0)
 	format: ClassVar[str] = "CALL {0}"
 
@@ -2365,7 +2365,7 @@ class CALLTaddr5(Instruction):
 	match: ClassVar[int] = 0b11000001
 	mmask: ClassVar[int] = 0b11000001
 	bytecount: ClassVar[int] = 1
-	field_defs: ClassVar[Sequence["Field"]] = (field.Addr5(offset=1),)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddr5(offset=1),)
 	flow: ClassVar[Flow] = ComputedCallT(callt_idx_field_idx=0)
 	format: ClassVar[str] = "CALLT {0}"
 
@@ -2502,7 +2502,7 @@ class BRaddr(Instruction):
 	match: ClassVar[int] = 0b10011011_00000000_00000000
 	mmask: ClassVar[int] = 0b11111111_00000000_00000000
 	bytecount: ClassVar[int] = 3
-	field_defs: ClassVar[Sequence["Field"]] = (field.Addr16(offset=0),)
+	field_defs: ClassVar[Sequence["Field"]] = (field.JAddr16(offset=0),)
 	flow: ClassVar[Flow] = UnconditionalBranch(branch_field_idx=0)
 	format: ClassVar[str] = "BR {0}"
 
