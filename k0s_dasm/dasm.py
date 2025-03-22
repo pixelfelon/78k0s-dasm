@@ -14,6 +14,7 @@ with open(sys.argv[1], "rb") as f:
 pcs: list[int] = []
 # pcs.extend(prog.entry_points())
 pcs = [0x0100]
+orig_pcs = list(pcs)
 
 while True:
 	# multi flow loop
